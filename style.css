@@ -25,7 +25,16 @@
     border: 1px solid lightgray;
     cursor: pointer;
 }
-
 .col:hover {
     background: lightgray;
+}
+
+.ship {
+    /* background: lightblue; */
+}
+.hit {
+    border-color: red;
+}
+.miss {
+    border-color: blue;
 }

@@ -1,28 +1,21 @@
-// grid = 15 X 15
-	// 1.3 (1=row, 3=col)
-// Ships:
-	/*
-  	1: 3 spaces
-    2: 5 spaces
-    3: 8 spaces
-  */
-// Both sides get own grid and own spaces
-// maintain state of hit/misses
-// use classes and new constructor
-
-// functions:
-	/*
-  	1: Shoot
-    2: check hit/miss
-    3: Check turn (hits go again)
-    4: Check if win every turn
-  */
+  /**
+   * @TODO restrict double hit on points
+   * @TODO Randomly generate locations for ships on initiation
+   * @TODO Figure out closure or class use for gameplay
+   */
 
 window.onload = () => {
   var top = document.getElementById('top-grid');
   var bottom = document.getElementById('bottom-grid');
 
-  const createGrid = (grid) => {
+  var topPlayer = { ships: { small: [], medium: [], large: []} }
+  var bottomPlayer = { ships: { small: [], medium: [], large: []} }
+
+  var playerTurn = 'top'; // 'top' && 'bottom'
+
+  const createGrid = (topPlayer, bottomPlayer, grid) => {
+
+    /* Create board grid points */
     for(var i = 1; i <= 15; i++) { // ROW
       let row = document.createElement('div');
       row.onclick = (e) => launchTorpedo(e);
@@ -38,21 +31,98 @@ window.onload = () => {
         row.appendChild(col);
       }
     }
+    /* Place ships on grid */
+    let setShips = ships();
+    for(var key in setShips) {
+      setShips[key].forEach( (e) => {
+        let r = e.split('.')[0]; // row
+        let c = e.split('.')[1]; // col
+        let point = ( document.getElementById( ('row-'+r )).children[c - 1] );
+        point.classList.add('ship')
+      })
+    }
   }
 
   const launchTorpedo = (e) => {
-    let attackPointRow = [...e.path][1].id.split('-')[1]
-    let attackPointCol = e.target.id.split('-')[1];
-    let attackTarget = `${attackPointRow}.${attackPointCol}`
-    console.log(attackTarget)
+    let r = [...e.path][1].id.split('-')[1]; // row
+    let c = e.target.id.split('-')[1]; // col
+    let attackPoint = `${r}.${c}`;
+    let point = ( document.getElementById( ('row-'+r )).children[c - 1] );
+
+    let hit = didTorpedoHit(attackPoint);
+    if(hit) {
+      point.classList.add('hit');
+      if(playerTurn === 'top') {
+        topPlayer.ships[hit.ship].push(attackPoint);
+        topPlayer.ships[hit.ship].sort(); // doesnt sort double digits
+      } else {
+        bottomPlayer.ships[hit.ship].push(attackPoint);
+        bottomPlayer.ships[hit.ship].sort(); // doesnt sort double digits
+      }
+      let sunk = didTorpedoSink(hit.ship);
+      if(sunk) {
+        alert('You sunk players '+ hit.ship + ' ship.')
+        let win = didTorpedoWin();
+        if(win) {
+          alert('winner!'+topTurn);
+        }
+      }
+    } else {
+      point.classList.add('miss');
+      playerTurn = (playerTurn === 'top') ? 'bottom' : 'top';
+    }
   }
 
-  const ships = () => {
-    let ships = {
+  const didTorpedoHit = (attackPoint) => {
+    let shipsToCheck = ships();
+    let hit = false;
+
+    for(var key in shipsToCheck) {
+      shipsToCheck[key].forEach( (e) => {
+        if(e == attackPoint) {
+          hit = {
+            ship: whichShip(shipsToCheck[key].length)
+          }
+        }
+      });
+      if(hit) {
+        break;
+      }
+    }
+    return hit;
+  }
+
+  const didTorpedoSink = (ship) => {
+    let allShips = ships();
+    if(playerTurn === 'top') {
+      return (topPlayer.ships[ship].length ===  allShips[ship].length);
+    } else {
+      return (bottomPlayer.ships[ship].length ===  allShips[ship].length);
+    }
+  }
+
+  const didTorpedoWin = () => {
+    // check if all ships have been sunk
+  }
+  const ships = () => { // hard coded ship loations currently
+    const ships = {
       small: ['4.7', '4.8', '4.9'], // 3 points
       medium: ['9.4', '10.4', '11.4', '12.4', '13.4'], // 5 points
       large: ['1.5','1.6','1.7','1.8','1.9','1.10','1.11','1.12'], // 8 points
     }
+    return ships;
   }
-   createGrid(top);
+
+  const whichShip = (shipLength) => {
+    switch(shipLength) {
+      case 3:
+        return 'small';
+      case 5:
+        return 'medium';
+      case 8:
+        return 'large';
+    }
+  }
+
+   createGrid(topPlayer, bottomPlayer, top);
 }
