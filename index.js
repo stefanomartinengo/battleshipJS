@@ -5,17 +5,19 @@
    */
 
 window.onload = () => {
-  var top = document.getElementById('top-grid');
-  var bottom = document.getElementById('bottom-grid');
 
-  var topPlayer = { ships: { small: [], medium: [], large: []} }
-  var bottomPlayer = { ships: { small: [], medium: [], large: []} }
+  var playerGrid = document.getElementById('player-grid');
+  var computerGrid = document.getElementById('computer-grid');
 
-  var playerTurn = 'top'; // 'top' && 'bottom'
+  var player = { ships: { small: [], medium: [], large: []} }
+  var computer = { ships: { small: [], medium: [], large: []} }
 
-  const createGrid = (topPlayer, bottomPlayer, grid) => {
+  var playerTurn = 'player'; // 'player' && 'computer'
+  let turn = document.getElementById('turn-display');
+  turn.innerHTML = `Turn: ${playerTurn}`;
 
-    /* Create board grid points */
+  /**  Create board grid points **/
+  const createGrid = (grid) => {
     for(var i = 1; i <= 15; i++) { // ROW
       let row = document.createElement('div');
       row.onclick = (e) => launchTorpedo(e);
@@ -24,7 +26,8 @@ window.onload = () => {
       grid.appendChild(row);
 
       for(var j = 1; j <= 15; j++) { // COL
-        let row = document.getElementById(`row-${i}`)
+        let row = document.getElementById(`row-${i}`, {data: grid});
+        row.setAttribute('grid', grid.id);
         let col = document.createElement('div');
         col.className = 'col';
         col.id = `col-${j}`;
@@ -44,32 +47,34 @@ window.onload = () => {
   }
 
   const launchTorpedo = (e) => {
+    let grid = [...e.path][2].id;
     let r = [...e.path][1].id.split('-')[1]; // row
     let c = e.target.id.split('-')[1]; // col
     let attackPoint = `${r}.${c}`;
-    let point = ( document.getElementById( ('row-'+r )).children[c - 1] );
+    var gridElement = document.getElementById(grid);
+    let point = gridElement.children[r - 1].children[c-1];
 
     let hit = didTorpedoHit(attackPoint);
     if(hit) {
       point.classList.add('hit');
-      if(playerTurn === 'top') {
-        topPlayer.ships[hit.ship].push(attackPoint);
-        topPlayer.ships[hit.ship].sort(); // doesnt sort double digits
+      if(playerTurn === 'player') {
+        player.ships[hit.ship].push(attackPoint);
+        player.ships[hit.ship].sort(); // doesnt sort double digits
       } else {
-        bottomPlayer.ships[hit.ship].push(attackPoint);
-        bottomPlayer.ships[hit.ship].sort(); // doesnt sort double digits
+        computer.ships[hit.ship].push(attackPoint);
+        computer.ships[hit.ship].sort(); // doesnt sort double digits
       }
       let sunk = didTorpedoSink(hit.ship);
       if(sunk) {
-        alert('You sunk players '+ hit.ship + ' ship.')
+        alert(`you sunk: ${playerTurn}'s ${hit.ship}  ship.`)
         let win = didTorpedoWin();
         if(win) {
-          alert('winner!'+topTurn);
+          alert('winner!' + playerTurn);
         }
       }
     } else {
       point.classList.add('miss');
-      playerTurn = (playerTurn === 'top') ? 'bottom' : 'top';
+      switchTurn();
     }
   }
 
@@ -94,15 +99,22 @@ window.onload = () => {
 
   const didTorpedoSink = (ship) => {
     let allShips = ships();
-    if(playerTurn === 'top') {
-      return (topPlayer.ships[ship].length ===  allShips[ship].length);
+    if(playerTurn === 'player') {
+      return (player.ships[ship].length ===  allShips[ship].length);
     } else {
-      return (bottomPlayer.ships[ship].length ===  allShips[ship].length);
+      return (computer.ships[ship].length ===  allShips[ship].length);
     }
   }
 
   const didTorpedoWin = () => {
-    // check if all ships have been sunk
+    let sortedMasterShips = ships();
+    for(var key in sortedMasterShips) {
+      sortedMasterShips[key] = sortedMasterShips[key].sort();
+    }
+    let playerShips = (playerTurn === 'player') ? player : computer;
+    if(JSON.stringify(playerShips.ships) === JSON.stringify(sortedMasterShips)) {
+      alert('winner');
+    }
   }
   const ships = () => { // hard coded ship loations currently
     const ships = {
@@ -124,5 +136,12 @@ window.onload = () => {
     }
   }
 
-   createGrid(topPlayer, bottomPlayer, top);
+  const switchTurn = () => {
+    playerTurn = ( playerTurn === 'player' ) ? 'computer' : 'player';
+    var domTurn = document.getElementById('turn-display');
+    domTurn.innerHTML = `Turn: ${playerTurn}`
+  }
+
+  createGrid(computerGrid);
+  createGrid(playerGrid);
 }
