@@ -1,7 +1,10 @@
   /**
+   * @TODO structure so that player turn attacks computer grid
    * @TODO restrict double hit on points
    * @TODO Randomly generate locations for ships on initiation
    * @TODO Figure out closure or class use for gameplay
+   * 
+   * @NOTE Currently, structure is better suited for 2-player and not 1 player with computer
    */
 
 window.onload = () => {
